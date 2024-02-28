@@ -45,27 +45,28 @@ class Snake_game:
     def __init__(self, n = 10):
         self.n = n
         self.game_field = self.game_field_create()
-        self.snake_head = Snake(1, 1)
+        self.snake_head = Snake(1, 1, self.n)
         self.snake_segments = [self.snake_head]
         self.position_food = self.food_create()
         self.direction = "e"
+        self.score = 0
 
     def game_field_create(self):
-        game_field = [["__" for i in range(1, self.n + 3)]]
+        game_field = [["██" for i in range(1, self.n + 3)]]
         for i in range(1, self.n + 1):
-            game_field.append(["| "]+["  " for i in range(1, self.n + 1)]+[" |"])
-        game_field.append(["__" for i in range(1, self.n + 3)])
+            game_field.append(["██"]+["  " for i in range(1, self.n + 1)]+["██"])
+        game_field.append(["██" for i in range(1, self.n + 3)])
         return game_field
     
     def game_field_update(self):
         for row in range(1, self.n + 1):
             for column in range(1, self.n + 1):
                 if (row, column) == self.snake_head.get_position():
-                    self.game_field[row][column] = "XX"
+                    self.game_field[row][column] = "██"
                 elif (row, column) == self.position_food.get_position():
-                    self.game_field[row][column] = "()"
+                    self.game_field[row][column] = "\033[43m  \033[0m"
                 elif (row, column) in [segment.get_position() for segment in self.snake_segments]:
-                    self.game_field[row][column] = "XX"
+                    self.game_field[row][column] = "██"
                 else:
                     self.game_field[row][column] = "  "
         for row in self.game_field:
@@ -87,10 +88,9 @@ class Snake_game:
                         break
             if not collision:
                 break
-        return Snake(coordinate_row, coordinate_column)
+        return Snake(coordinate_row, coordinate_column, self.n)
     
     def snake_segment_create(self):
-        # snake = Snake(self.snake_segments[0].coordinate_row, self.snake_segments[0].coordinate_column)
         snake = Snake(self.snake_status[-1].coordinate_row, self.snake_status[-1].coordinate_column)
         self.snake_segments.append(snake)
          
@@ -104,27 +104,37 @@ class Snake_game:
         self.snake_head.move_snake(self.direction)
         self.snake_follow()
           
-    def pressed_keyboard(self):
-        if keyboard.is_pressed('up'):
+    def pressed_keyboard(self, direction):
+        if keyboard.is_pressed('up') and direction != "s":
             self.direction = "n"
-        elif keyboard.is_pressed('down'):
+        elif keyboard.is_pressed('down') and direction != "n":
             self.direction = 's'
-        elif keyboard.is_pressed('left'):
+        elif keyboard.is_pressed('left') and direction != "e":
             self.direction = 'w'
-        elif keyboard.is_pressed('right'):
+        elif keyboard.is_pressed('right') and direction != "w":
             self.direction = 'e'
 
     
     def check_eaten(self):        
             if self.snake_head.coordinate_row == self.position_food.coordinate_row and self.snake_head.coordinate_column == self.position_food.coordinate_column:
-                #self.snake_food_eaten += 1    
+                self.score += 1    
                 return True
+    
+    def game_over(self):
+        print("""
+█████  █████  █   █  █████     ███   █   █  █████  ██████
+█      █   █  ██ ██  █        █   █  █   █  █      █   ██
+█ ███  █████  █ █ █  █████    █   █  █   █  █████  █████
+█   █  █   █  █   █  █        █   █  ██ ██  █      █   ██
+█████  █   █  █   █  █████     ███    ███   █████  █    ██
+""")
+        print(f"Your final score was {self.score}.")
             
     def snake_gameplay(self):
         self.game_field_update() 
         while self.snake_head.get_position() not in [segment.get_position() for segment in self.snake_segments[1:]]:
-            time.sleep(0.5)
-            self.pressed_keyboard()
+            time.sleep(0.2)
+            self.pressed_keyboard(self.direction)
             self.snake_status = copy.deepcopy(self.snake_segments)
             self.move_snake()
             if self.check_eaten():
@@ -132,13 +142,10 @@ class Snake_game:
                 self.snake_segment_create()
             os.system('cls' if os.name == 'nt' else 'clear')
             self.game_field_update()
-            print(self.snake_head.get_position() not in [segment.get_position() for segment in self.snake_segments[1:]])
-            for i in self.snake_segments: 
-                print(i)
-        print("Game Over")
+            print(f"Your score is {self.score}.")
+        self.game_over()
+
+
          
-            
-
-
-game = Snake_game(10)
+game = Snake_game(27)
 game.snake_gameplay()
